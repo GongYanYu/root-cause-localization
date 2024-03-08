@@ -1,0 +1,45 @@
+# 选择有用特性的伪代码
+
+function stderr_criteria(empirical, reference, threshold):
+    empirical_mean = mean(empirical)
+    empirical_std = std(empirical)
+    
+    reference_mean = mean(reference)
+    reference_std = std(reference)
+    
+    historical_std = max(reference_std, reference_mean * 0.01 + 0.01)
+    
+    ref_ratio = mean(abs(reference - reference_mean)) / historical_std
+    emp_ratio = mean(abs(empirical - reference_mean)) / historical_std
+    
+    return abs(emp_ratio - ref_ratio) > threshold * ref_ratio + 1.0
+
+function selecting_feature_main(input_file, output_file, history, fisher_threshold):
+    df = load_data(input_file)
+    history = load_data(history)
+    
+    useful_features_dict = defaultdict(list)
+    
+    for each_call in df_indices:
+        source, target = each_call
+        
+        for each_feature in FEATURE_NAMES:
+            empirical = sort(df.loc[(source, target), each_feature])
+            reference = sort(history.loc[(source, target), each_feature])
+            
+            fisher = stderr_criteria(empirical, reference, fisher_threshold)
+            
+            if fisher:
+                useful_features_dict[(source, target)].append(each_feature)
+    
+    save_output(output_file, dict(useful_features_dict))
+
+# 主程序入口
+if __name__ == '__main__':
+    dataset_path = '../datasets/A'
+    input_file = f'{dataset_path}/uninjection/admin-order_abort_1011_data.pkl'
+    history = f'{dataset_path}/uninjection/pkl_3_data.pkl'
+    output_file = f'{dataset_path}/uninjection/useful_feature_2'
+    fisher_threshold = 1
+    
+    selecting_feature_main(input_file, output_file, history, fisher_threshold)
